@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Master: ตะลุยโจทย์นายสิบ (ครบทุกวิชา)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4e54c8;
+            --secondary: #8f94fb;
+            --correct: #00b894;
+            --wrong: #ff7675;
+            --warning: #fdcb6e;
+            --text: #2d3436;
+            --bg-card: rgba(255, 255, 255, 0.98);
+        }
+
+        body {
+            font-family: 'Kanit', sans-serif;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        .container {
+            background: var(--bg-card);
+            padding: 30px;
+            border-radius: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 700px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        /* Scrollbar */
+        .container::-webkit-scrollbar { width: 8px; }
+        .container::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+        .container::-webkit-scrollbar-thumb { background: #bdc3c7; border-radius: 10px; }
+
+        h1 { color: var(--primary); margin-bottom: 5px; font-size: 2rem; }
+        h2 { color: var(--text); font-size: 1.5rem; }
+
+        /* Menu Grid */
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .btn-subject {
+            padding: 20px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            color: white;
+            font-weight: 600;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-subject:hover { transform: translateY(-3px); }
+        
+        /* สีปุ่มวิชาต่างๆ */
+        .btn-thai { background: linear-gradient(45deg, #ff6b6b, #ee5253); }
+        .btn-com { background: linear-gradient(45deg, #48dbfb, #0abde3); }
+        .btn-law { background: linear-gradient(45deg, #feca57, #ff9f43); }
+        .btn-soc { background: linear-gradient(45deg, #1dd1a1, #10ac84); }
+        .btn-math { background: linear-gradient(45deg, #a55eea, #8854d0); } 
+        .btn-eng { background: linear-gradient(45deg, #ff9ff3, #f368e0); }
+        
+        /* ปุ่ม Dashboard */
+        .btn-dashboard {
+            background: linear-gradient(45deg, #2d3436, #636e72);
+            grid-column: 1 / -1; /* ขยายเต็มแถว */
+            margin-top: 10px;
+        }
+
+        /* Quiz Area & Others */
+        #quiz-area, #score-area, #dashboard-area { display: none; animation: fadeIn 0.5s ease; }
+
+        .progress-container {
+            width: 100%;
+            background-color: #dfe6e9;
+            border-radius: 20px;
+            margin: 15px 0;
+            height: 8px;
+            overflow: hidden;
+        }
+        .progress-bar { height: 100%; background: var(--primary); width: 0%; transition: width 0.3s ease; }
+
+        .question-box {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin: 20px 0;
+            color: var(--text);
+            line-height: 1.6;
+            text-align: left;
+        }
+
+        .options-list { display: flex; flex-direction: column; gap: 12px; }
+
+        .btn-option {
+            padding: 15px;
+            border: 2px solid #dfe6e9;
+            border-radius: 10px;
+            background: white;
+            cursor: pointer;
+            text-align: left;
+            font-size: 1.1rem;
+            color: var(--text);
+            transition: all 0.2s;
+            font-family: 'Kanit', sans-serif;
+        }
+        .btn-option:hover:not(:disabled) { border-color: var(--primary); background-color: #f7f9ff; }
+        .btn-option:disabled { cursor: default; opacity: 0.8; }
+
+        .correct { background-color: var(--correct) !important; color: white !important; border-color: var(--correct) !important; }
+        .wrong { background-color: var(--wrong) !important; color: white !important; border-color: var(--wrong) !important; }
+
+        .explanation-box {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #fff3cd;
+            border: 1px solid #ffeeba;
+            color: #856404;
+            border-radius: 10px;
+            text-align: left;
+            display: none;
+            animation: fadeIn 0.4s;
+        }
+        
+        .btn-next {
+            margin-top: 20px;
+            padding: 12px 40px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: none;
+            box-shadow: 0 4px 15px rgba(78, 84, 200, 0.3);
+            width: 100%;
+        }
+
+        /* --- Analysis Section (วิเคราะห์รายครั้ง) --- */
+        .analysis-box {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: left;
+        }
+        .tag-pill {
+            display: inline-block;
+            background: #ff7675;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            margin: 5px;
+            font-size: 0.9rem;
+        }
+        .review-item { border-bottom: 1px solid #eee; padding: 10px 0; }
+        .review-q { font-weight: bold; color: var(--wrong); }
+        .review-ans { color: var(--correct); font-size: 0.95rem; margin-top: 5px; }
+
+        /* --- Dashboard Section (วิเคราะห์รวม) --- */
+        .dash-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            text-align: left;
+        }
+        .stat-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 500;}
+        .stat-bar-bg { width: 100%; height: 12px; background: #dfe6e9; border-radius: 10px; overflow: hidden; margin-bottom: 15px; }
+        .stat-bar-fill { height: 100%; border-radius: 10px; transition: width 1s ease; }
+        
+        .advice-box {
+            background: #e3f2fd;
+            color: #0984e3;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .score-circle {
+            width: 120px; height: 120px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 20px;
+            color: white; font-size: 2.5rem; font-weight: bold;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div id="menu-area">
+            <h1>🎓 ตะลุยโจทย์นายสิบ</h1>
+            <p style="margin-bottom: 30px;">เลือกวิชาที่ต้องการทดสอบ (สุ่มโจทย์)</p>
+            <div class="menu-grid">
+                <button class="btn-subject btn-thai" onclick="startQuiz('thai')">
+                    📚 ภาษาไทย<br><span style="font-size:0.8rem; opacity:0.8;">สุ่ม 25 ข้อ</span>
+                </button>
+                <button class="btn-subject btn-com" onclick="startQuiz('computer')">
+                    💻 คอมพิวเตอร์<br><span style="font-size:0.8rem; opacity:0.8;">สุ่ม 25 ข้อ</span>
+                </button>
+                <button class="btn-subject btn-law" onclick="startQuiz('law')">
+                    ⚖️ กฎหมาย<br><span style="font-size:0.8rem; opacity:0.8;">สุ่ม 20 ข้อ</span>
+                </button>
+                <button class="btn-subject btn-soc" onclick="startQuiz('society')">
+                    🌏 สังคม+อาเซียน<br><span style="font-size:0.8rem; opacity:0.8;">สุ่ม 25 ข้อ</span>
+                </button>
+                <button class="btn-subject btn-math" onclick="startQuiz('math')">
+                    🧮 คณิตศาสตร์<br><span style="font-size:0.8rem; opacity:0.8;">สุ่ม 20 ข้อ</span>
+                </button>
+                <button class="btn-subject btn-eng" onclick="startQuiz('english')">
+                    🇬🇧 ภาษาอังกฤษ<br><span style="font-size:0.8rem; opacity:0.8;">สุ่ม 20 ข้อ</span>
+                </button>
+                
+                <button class="btn-subject btn-dashboard" onclick="showOverallDashboard()">
+                    📊 เช็คความพร้อมสอบจริง <br><span style="font-size:0.8rem; opacity:0.8;">(วิเคราะห์คะแนนสะสมทั้งหมด)</span>
+                </button>
+            </div>
+            
+            <button onclick="resetHistory()" style="margin-top:20px; background:none; border:none; color:#aaa; text-decoration:underline; cursor:pointer;">ล้างประวัติคะแนนสะสม</button>
+        </div>
+
+        <div id="quiz-area">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h3 id="subject-title" style="margin:0; color:var(--primary);">วิชา...</h3>
+                <span style="font-size: 0.9rem; color:#666;">
+                    ข้อ <span id="current-q">1</span> / <span id="total-q">25</span>
+                </span>
+            </div>
+            
+            <div class="progress-container">
+                <div class="progress-bar" id="progress-bar"></div>
+            </div>
+
+            <div class="question-box" id="question-text">Loading...</div>
+            <div class="options-list" id="options-container"></div>
+            
+            <div id="explanation-area" class="explanation-box">
+                <span style="font-weight:bold;">💡 เฉลย:</span>
+                <span id="explanation-text">...</span>
+            </div>
+
+            <button id="btn-next-q" class="btn-next" onclick="nextQuestion()">ข้อถัดไป ➜</button>
+            
+            <div style="margin-top: 30px;">
+                <button class="btn-subject" style="background:#b2bec3; padding:10px 20px; font-size:0.9rem;" onclick="playSound('click'); goHome()">พักการสอบ</button>
+            </div>
+        </div>
+
+        <div id="score-area">
+            <h1>📊 ผลการทดสอบครั้งนี้</h1>
+            <div class="score-circle" id="final-score">0/0</div>
+            
+            <div class="analysis-box">
+                <h3 style="color: #d63031;">⚠️ จุดอ่อนที่พบในรอบนี้:</h3>
+                <div id="weakness-tags"></div>
+            </div>
+
+            <div class="analysis-box">
+                <h3 style="color: #e17055;">📝 เฉลยข้อที่ผิด:</h3>
+                <div id="review-list" style="max-height: 200px; overflow-y: auto;"></div>
+            </div>
+
+            <button class="btn-subject btn-com" onclick="playSound('click'); goHome()" style="margin: 20px auto; width:100%;">กลับหน้าหลัก / บันทึกผล</button>
+        </div>
+
+        <div id="dashboard-area">
+            <h1>📈 สรุปความพร้อมสอบจริง</h1>
+            <p style="color:#666; margin-bottom:20px;">ประมวลผลจากประวัติการทำข้อสอบทั้งหมดของคุณ</p>
+
+            <div class="dash-card">
+                <h2 style="margin:0 0 15px 0; color:#2d3436;">เกรดเฉลี่ยรวม: <span id="total-percent" style="color:var(--primary); font-size:1.8rem;">0%</span></h2>
+                <div id="overall-advice" class="advice-box">...</div>
+            </div>
+
+            <div class="dash-card" id="stats-container">
+                </div>
+
+            <button class="btn-subject btn-com" onclick="playSound('click'); goHome()" style="width:100%;">กลับหน้าเมนู</button>
+        </div>
+
+    </div>
+
+    <script src="subject_thai.js"></script>
+    <script src="subject_computer.js"></script>
+    <script src="subject_law.js"></script>
+    <script src="subject_society.js"></script>
+    <script src="math.js"></script>
+    <script src="eng.js"></script>
+
+    <script>
+        const sounds = {
+            click: new Audio('sounds/click.mp3'),
+            correct: new Audio('sounds/correct.mp3'),
+            wrong: new Audio('sounds/wrong.mp3')
+        };
+        function playSound(type) { if(sounds[type]) { sounds[type].currentTime = 0; sounds[type].play().catch(e=>{}); } }
+
+        const QUIZ_CONFIG = {
+            'thai': 25, 'computer': 25, 'society': 25, 'law': 20, 'math': 20, 'english': 20
+        };
+
+        // โหลดประวัติคะแนนสะสม (ถ้ามี)
+        let userHistory = JSON.parse(localStorage.getItem('policeQuizHistory')) || {
+            thai: { correct: 0, total: 0 },
+            computer: { correct: 0, total: 0 },
+            law: { correct: 0, total: 0 },
+            society: { correct: 0, total: 0 },
+            math: { correct: 0, total: 0 },
+            english: { correct: 0, total: 0 }
+        };
+
+        let activeQuestions = [];
+        let currentIndex = 0;
+        let score = 0;
+        let wrongAnswersLog = [];
+        let currentSubject = '';
+
+        function shuffle(array) {
+            let currentIndex = array.length, randomIndex;
+            while (currentIndex != 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+            }
+            return array;
+        }
+
+        // ฟังก์ชันตรวจจับหัวข้อ (สำหรับวิเคราะห์รายครั้ง)
+        function detectTopic(questionText) {
+            const txt = questionText.toLowerCase();
+            if(txt.includes('ราชาศัพท์') || txt.includes('พระ')) return 'คำราชาศัพท์';
+            if(txt.includes('สุภาพ')) return 'คำสุภาพ';
+            if(txt.includes('สะกด') || txt.includes('เขียน')) return 'การสะกดคำ';
+            if(txt.includes('ram') || txt.includes('rom') || txt.includes('cpu')) return 'Hardware';
+            if(txt.includes('อาญา')) return 'กฎหมายอาญา';
+            if(txt.includes('อนุกรม') || txt.includes('ถัดไป')) return 'อนุกรม';
+            if(txt.includes('tense') || txt.includes('yesterday')) return 'Grammar';
+            return 'ทั่วไป';
+        }
+
+        function startQuiz(subject) {
+            playSound('click');
+            currentSubject = subject;
+            let sourceData = [];
+            
+            if(subject === 'thai') sourceData = window.thaiQuestions;
+            else if(subject === 'computer') sourceData = window.computerQuestions;
+            else if(subject === 'law') sourceData = window.lawQuestions;
+            else if(subject === 'society') sourceData = window.societyQuestions;
+            else if(subject === 'math') sourceData = window.mathQuestions;
+            else if(subject === 'english') sourceData = window.engQuestions;
+
+            if(!sourceData || sourceData.length === 0) { alert("ไม่พบข้อมูลข้อสอบ! ตรวจสอบว่าไฟล์ .js อยู่ในโฟลเดอร์ครบทุกไฟล์หรือไม่"); return; }
+
+            let shuffled = shuffle([...sourceData]); 
+            let limit = QUIZ_CONFIG[subject] || 20;
+            activeQuestions = shuffled.slice(0, Math.min(limit, shuffled.length));
+
+            currentIndex = 0; score = 0; wrongAnswersLog = [];
+
+            document.getElementById('menu-area').style.display = 'none';
+            document.getElementById('score-area').style.display = 'none';
+            document.getElementById('dashboard-area').style.display = 'none';
+            document.getElementById('quiz-area').style.display = 'block';
+            
+            const titles = { 'thai': 'ภาษาไทย', 'computer': 'คอมพิวเตอร์', 'law': 'กฎหมาย', 'society': 'สังคม+อาเซียน', 'math': 'คณิตศาสตร์', 'english': 'ภาษาอังกฤษ' };
+            document.getElementById('subject-title').innerText = titles[subject];
+            document.getElementById('total-q').innerText = activeQuestions.length;
+
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            document.getElementById('explanation-area').style.display = 'none';
+            document.getElementById('btn-next-q').style.display = 'none';
+            
+            const q = activeQuestions[currentIndex];
+            document.getElementById('current-q').innerText = currentIndex + 1;
+            document.getElementById('question-text').innerText = q.question;
+            document.getElementById('progress-bar').style.width = ((currentIndex) / activeQuestions.length * 100) + '%';
+
+            const optsDiv = document.getElementById('options-container');
+            optsDiv.innerHTML = '';
+
+            q.options.forEach((opt, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-option';
+                btn.innerText = opt;
+                btn.onclick = () => checkAnswer(index, q, btn);
+                optsDiv.appendChild(btn);
+            });
+        }
+
+        function checkAnswer(selectedIndex, questionObj, btnElement) {
+            const allBtns = document.querySelectorAll('.btn-option');
+            allBtns.forEach(b => b.disabled = true);
+
+            const correctIndex = questionObj.answer;
+
+            if(selectedIndex === correctIndex) {
+                btnElement.classList.add('correct');
+                score++;
+                playSound('correct');
+            } else {
+                btnElement.classList.add('wrong');
+                allBtns[correctIndex].classList.add('correct');
+                playSound('wrong');
+                wrongAnswersLog.push(questionObj);
+            }
+
+            document.getElementById('explanation-text').innerText = questionObj.explanation || "ไม่มีคำอธิบายเพิ่มเติม";
+            document.getElementById('explanation-area').style.display = 'block';
+
+            const nextBtn = document.getElementById('btn-next-q');
+            nextBtn.style.display = 'inline-block';
+            nextBtn.innerText = (currentIndex === activeQuestions.length - 1) ? "จบการสอบ (ดูผล)" : "ข้อถัดไป ➜";
+        }
+
+        function nextQuestion() {
+            playSound('click');
+            currentIndex++;
+            if(currentIndex < activeQuestions.length) {
+                loadQuestion();
+            } else {
+                processAndShowScore();
+            }
+        }
+
+        function processAndShowScore() {
+            playSound('correct');
+            
+            // 1. บันทึกคะแนนลงประวัติรวม (Accumulate)
+            if(!userHistory[currentSubject]) userHistory[currentSubject] = { correct: 0, total: 0 };
+            userHistory[currentSubject].correct += score;
+            userHistory[currentSubject].total += activeQuestions.length;
+            localStorage.setItem('policeQuizHistory', JSON.stringify(userHistory));
+
+            // 2. แสดงผลสอบรอบนี้ (ระบบเดิม)
+            document.getElementById('quiz-area').style.display = 'none';
+            document.getElementById('score-area').style.display = 'block';
+            document.getElementById('final-score').innerText = score + "/" + activeQuestions.length;
+
+            const weaknessDiv = document.getElementById('weakness-tags');
+            weaknessDiv.innerHTML = "";
+            const reviewDiv = document.getElementById('review-list');
+            reviewDiv.innerHTML = "";
+
+            if(wrongAnswersLog.length > 0) {
+                let topicCounts = {};
+                wrongAnswersLog.forEach(q => {
+                    let topic = detectTopic(q.question);
+                    topicCounts[topic] = (topicCounts[topic] || 0) + 1;
+                    let item = document.createElement('div');
+                    item.className = 'review-item';
+                    item.innerHTML = `<div class=\"review-q\">❌ ${q.question}</div><div class=\"review-ans\">✅ ตอบ: ${q.options[q.answer]} <br> <small>(${q.explanation || '-'})</small></div>`;
+                    reviewDiv.appendChild(item);
+                });
+
+                let sortedTopics = Object.keys(topicCounts).sort((a,b) => topicCounts[b] - topicCounts[a]);
+                sortedTopics.forEach(topic => {
+                    let span = document.createElement('span');
+                    span.className = 'tag-pill';
+                    span.innerText = `${topic} (${topicCounts[topic]})`;
+                    weaknessDiv.appendChild(span);
+                });
+            } else {
+                weaknessDiv.innerHTML = "<span style='color:green; font-weight:bold;'>สุดยอด! ถูกทุกข้อ 🎉</span>";
+                reviewDiv.innerHTML = "<p>ไม่มีข้อที่ต้องทบทวน</p>";
+            }
+        }
+
+        function showOverallDashboard() {
+            playSound('click');
+            document.getElementById('menu-area').style.display = 'none';
+            document.getElementById('dashboard-area').style.display = 'block';
+
+            const container = document.getElementById('stats-container');
+            container.innerHTML = '';
+            
+            let totalCorrectAll = 0;
+            let totalQuestionsAll = 0;
+            
+            const titles = { 'thai': 'ภาษาไทย', 'computer': 'คอมพิวเตอร์', 'law': 'กฎหมาย', 'society': 'สังคม', 'math': 'คณิตศาสตร์', 'english': 'ภาษาอังกฤษ' };
+
+            for (const key of Object.keys(titles)) {
+                const data = userHistory[key] || { correct: 0, total: 0 };
+                let percent = 0;
+                let barColor = '#dfe6e9';
+                let label = 'ยังไม่เคยสอบ';
+                let advice = '';
+
+                if (data.total > 0) {
+                    percent = Math.round((data.correct / data.total) * 100);
+                    totalCorrectAll += data.correct;
+                    totalQuestionsAll += data.total;
+                    label = `${percent}% (${data.correct}/${data.total} ข้อ)`;
+                    
+                    if(percent >= 80) { barColor = '#00b894'; advice = '✅ โคตรสุด'; }
+                    else if(percent >= 60) { barColor = '#fdcb6e'; advice = '⚠️ ใช้ได้'; }
+                    else { barColor = '#ff7675'; advice = '❌ ไปเรียนเพิ่มด่วน'; }
+                }
+
+                container.innerHTML += `
+                    <div class="stat-row">
+                        <span>${titles[key]}</span>
+                        <span>${label} <span style="font-size:0.8rem; color:${barColor}; font-weight:bold;">${advice}</span></span>
+                    </div>
+                    <div class="stat-bar-bg">
+                        <div class="stat-bar-fill" style="width: ${percent}%; background: ${barColor};"></div>
+                    </div>
+                `;
+            }
+
+            // คำนวณภาพรวม
+            let overallPercent = 0;
+            if(totalQuestionsAll > 0) overallPercent = Math.round((totalCorrectAll / totalQuestionsAll) * 100);
+            
+            document.getElementById('total-percent').innerText = `${overallPercent}%`;
+            
+            const adviceBox = document.getElementById('overall-advice');
+            if(totalQuestionsAll === 0) {
+                adviceBox.innerText = "เริ่มทำข้อสอบสัก 1 วิชา เพื่อให้ระบบเริ่มวิเคราะห์ข้อมูลครับ";
+            } else if(overallPercent >= 80) {
+                adviceBox.innerText = "โคตรสุด! คุณมีความพร้อมสูงมาก ต้องติดตัวจริงแล้วละ";
+                adviceBox.style.background = "#d4edda"; adviceBox.style.color = "#155724";
+            } else if(overallPercent >= 60) {
+                adviceBox.innerText = "อยู่ในเกณฑ์สอบผ่าน! แต่ห้ามประมาท ให้เน้นวิชาที่ยังได้สีแดง";
+                adviceBox.style.background = "#fff3cd"; adviceBox.style.color = "#856404";
+            } else {
+                adviceBox.innerText = "ยังต้องพยายามเพิ่ม! วิชาไหนได้สีแดง คือกลับไปทบทวนด่วน!";
+                adviceBox.style.background = "#f8d7da"; adviceBox.style.color = "#721c24";
+            }
+        }
+
+        function resetHistory() {
+            if(confirm('คุณต้องการลบประวัติคะแนนสะสมทั้งหมดใช่หรือไม่?')) {
+                localStorage.removeItem('policeQuizHistory');
+                location.reload();
+            }
+        }
+
+        function goHome() {
+            document.getElementById('menu-area').style.display = 'block';
+            document.getElementById('score-area').style.display = 'none';
+            document.getElementById('quiz-area').style.display = 'none';
+            document.getElementById('dashboard-area').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
