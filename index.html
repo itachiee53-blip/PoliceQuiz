@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Master: ตะลุยโจทย์นายสิบ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="container">
+        <div id="menu-area">
+            <h1>🎓 ตะลุยโจทย์นายสิบ</h1>
+            
+            <div class="tree-section" onclick="openTreeModal()">
+                <div class="tree-level">Level: <span id="tree-lvl-name">เมล็ดพันธุ์</span></div>
+                <div class="tree-icon" id="tree-img">🌱</div>
+                <div class="exp-bar-container"><div class="exp-bar-fill" id="tree-exp-bar"></div></div>
+                <div class="exp-text">EXP: <span id="current-exp">0</span> / <span id="next-level-exp">100</span> (กดเพื่อดูรายละเอียด)</div>
+            </div>
+
+            <p style="margin-bottom: 30px;">เลือกวิชาที่ต้องการทดสอบ</p>
+            <div class="menu-grid">
+                <button class="btn-subject btn-thai" onclick="selectSubject('thai')">📚 ภาษาไทย</button>
+                <button class="btn-subject btn-com" onclick="selectSubject('computer')">💻 คอมพิวเตอร์</button>
+                <button class="btn-subject btn-law" onclick="selectSubject('law')">⚖️ กฎหมาย</button>
+                <button class="btn-subject btn-soc" onclick="selectSubject('society')">🌏 สังคม+อาเซียน</button>
+                <button class="btn-subject btn-math" onclick="selectSubject('math')">🧮 คณิตศาสตร์</button>
+                <button class="btn-subject btn-eng" onclick="selectSubject('english')">🇬🇧 ภาษาอังกฤษ</button>
+                <button class="btn-subject btn-dashboard" onclick="showOverallDashboard()">📊 เช็คความพร้อมสอบจริง</button>
+            </div>
+            
+            <button onclick="resetHistory()" style="margin-top:20px; background:none; border:none; color:#aaa; text-decoration:underline; cursor:pointer;">ล้างประวัติคะแนนสะสม</button>
+        </div>
+
+        <div id="tree-modal" class="modal-overlay">
+            <div class="modal-content">
+                <span class="modal-close" onclick="closeTreeModal()">&times;</span>
+                <h2 style="color:var(--primary); margin-bottom:5px;">🌳 สถานะของคุณ</h2>
+                <div style="font-size:1.5rem; margin-bottom:15px;" id="modal-rank-title">...</div>
+                
+                <div class="status-badge" style="background:#e8f8f5; border-left:5px solid #00b894;">
+                    <strong style="color:#00b894;">🔥 วิชาที่แกร่งที่สุด:</strong><br>
+                    <span id="modal-best-subject">-</span>
+                </div>
+
+                <div class="status-badge" style="background:#fff0f0; border-left:5px solid #ff7675;">
+                    <strong style="color:#ff7675;">🛠️ วิชาที่ต้องรีบซ่อม:</strong><br>
+                    <span id="modal-worst-subject">-</span>
+                </div>
+
+                <div class="blessing-box" id="modal-blessing-text">...</div>
+                <div style="font-size:0.8rem; color:#aaa; margin-top:10px;" id="modal-buff-text">...</div>
+            </div>
+        </div>
+
+        <div id="set-selection-area">
+            <h2 id="set-selection-title">เลือกชุดข้อสอบ</h2>
+            <p style="color:#666;">มีข้อสอบทั้งหมด <span id="total-questions-count">0</span> ข้อ แบ่งเป็นชุดละ 25 ข้อ</p>
+            <div id="set-buttons-container" class="set-grid"></div>
+            <button class="btn-subject" style="background:#b2bec3; margin-top:20px; width:100%;" onclick="playSound('click'); goHome()">⬅ ย้อนกลับไปหน้าเมนู</button>
+        </div>
+
+        <div id="quiz-area">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h3 id="subject-title" style="margin:0; color:var(--primary);">วิชา...</h3>
+                <span style="font-size: 0.9rem; color:#666;">ข้อ <span id="current-q">1</span> / <span id="total-q">25</span></span>
+            </div>
+            <div class="progress-container"><div class="progress-bar" id="progress-bar"></div></div>
+            <div class="question-box" id="question-text">Loading...</div>
+            <div class="options-list" id="options-container"></div>
+            <div id="explanation-area" class="explanation-box"><span style="font-weight:bold;">💡 เฉลย:</span> <span id="explanation-text">...</span></div>
+            <button id="btn-next-q" class="btn-next" onclick="nextQuestion()">ข้อถัดไป ➜</button>
+            <div style="margin-top: 30px;">
+                <button class="btn-subject" style="background:#b2bec3; padding:10px 20px; font-size:0.9rem;" onclick="playSound('click'); showSetSelection(currentSubjectName)">ยกเลิกการสอบ</button>
+            </div>
+        </div>
+
+        <div id="score-area">
+            <h1>📊 ผลการทดสอบ</h1>
+            <div class="score-circle" id="final-score">0/0</div>
+            <div style="background:#d4edda; color:#155724; padding:15px; border-radius:10px; margin-bottom:20px;"><strong>🌿 คุณได้รับปุ๋ยบำรุงต้นไม้: +<span id="gained-xp">0</span> แต้ม!</strong></div>
+            <div class="analysis-box"><h3 style="color: #d63031;">⚠️ จุดที่ต้องระวัง:</h3><div id="weakness-tags"></div></div>
+            <div class="analysis-box"><h3 style="color: #e17055;">📝 เฉลยข้อที่ผิด:</h3><div id="review-list" style="max-height: 200px; overflow-y: auto;"></div></div>
+            <button class="btn-subject btn-com" onclick="playSound('click'); showSetSelection(currentSubjectName)" style="margin: 20px auto; width:100%;">ทำชุดอื่นต่อ</button>
+        </div>
+
+        <div id="dashboard-area">
+            <h1>📈 สรุปความพร้อมสอบจริง</h1>
+            <div class="dash-card">
+                <h2 style="margin:0 0 15px 0; color:#2d3436;">เกรดเฉลี่ยรวม: <span id="total-percent" style="color:var(--primary); font-size:1.8rem;">0%</span></h2>
+                <div id="overall-advice" class="advice-box">...</div>
+            </div>
+            <div class="dash-card" id="stats-container"></div>
+            <button class="btn-subject btn-com" onclick="playSound('click'); goHome()" style="width:100%;">กลับหน้าเมนู</button>
+        </div>
+    </div>
+
+    <script src="subject_thai.js"></script>
+    <script src="subject_computer.js"></script>
+    <script src="subject_law.js"></script>
+    <script src="subject_society.js"></script>
+    <script src="math.js"></script>
+    <script src="eng.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
